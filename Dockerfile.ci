@@ -49,45 +49,16 @@ RUN if [ "${HOSTTYPE}" = "x86_64" ]; then \
 	rm ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz \
 	; fi
 
-# Install Doxygen (x86 only)
-# NOTE: Pre-built Doxygen binaries are only available for x86_64 host.
-RUN if [ "${HOSTTYPE}" = "x86_64" ]; then \
-	wget ${WGET_ARGS} https://downloads.sourceforge.net/project/doxygen/rel-${DOXYGEN_VERSION}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz && \
-	tar xf doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz -C /opt && \
-	ln -s /opt/doxygen-${DOXYGEN_VERSION}/bin/doxygen /usr/local/bin && \
-	rm doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz \
-	; fi
+# removed doxygen (documentation generator)
 
+# Removed renode (risc version of qemu?)
 
-# Install renode (x86 only)
-# NOTE: Renode is currently only available for x86_64 host.
-RUN if [ "${HOSTTYPE}" = "x86_64" ]; then \
-	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF && \
-	echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | tee /etc/apt/sources.list.d/mono-official-stable.list && \
-	apt-get -y update && \
-	wget ${WGET_ARGS} https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode_${RENODE_VERSION}_amd64.deb && \
-	apt-get install -y ./renode_${RENODE_VERSION}_amd64.deb && \
-	rm renode_${RENODE_VERSION}_amd64.deb && \
-	pip3 install -r /opt/renode/tests/requirements.txt --no-cache-dir \
-	; fi
-
-# Install BSIM
-# Note: west needs an extra folder level, so we create a link to the old location to be backwards compatible
-RUN mkdir -p /opt/bsim_west && \
-	cd /opt/ && \
-	west init -m https://github.com/zephyrproject-rtos/babblesim-manifest.git --mr ${BSIM_VERSION} bsim_west && \
-	cd bsim_west/bsim && \
-	west update && \
-	make everything -j 8 && \
-	echo ${BSIM_VERSION} > ./version && \
-	chmod ag+w . -R && \
-	ln -s /opt/bsim_west/bsim /opt/bsim
+# Removed BSIM (babblesim pyhsical medium simulator for testing radio protocols)
 
 # Install cargo environment
 RUN wget -q -O-  "https://sh.rustup.rs" | sh -s -- -y
 
-# Install uefi-run utility
-RUN ~/.cargo/bin/cargo install uefi-run --root /usr
+# Removed uefi-run utility (runs efi files in qemu)
 
 # Install LLVM and Clang
 RUN wget ${WGET_ARGS} https://apt.llvm.org/llvm.sh && \
@@ -95,52 +66,21 @@ RUN wget ${WGET_ARGS} https://apt.llvm.org/llvm.sh && \
 	./llvm.sh ${LLVM_VERSION} all && \
 	rm -f llvm.sh
 
-# Install sparse package for static analysis
-RUN mkdir -p /opt/sparse && \
-	cd /opt/sparse && \
-	git clone https://git.kernel.org/pub/scm/devel/sparse/sparse.git && \
-	cd sparse && git checkout ${SPARSE_VERSION} && \
-	make -j8 && \
-	PREFIX=/opt/sparse make install && \
-	rm -rf /opt/sparse/sparse
+# removed sparse (package for static analysis)
 
-# Install protobuf-compiler
-RUN mkdir -p /opt/protoc && \
-	cd /opt/protoc && \
-	PROTOC_HOSTTYPE=$(case $HOSTTYPE in x86_64) echo "x86_64";; aarch64) echo "aarch_64";; esac) && \
-	wget ${WGET_ARGS} https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-${PROTOC_HOSTTYPE}.zip && \
-	unzip protoc-${PROTOC_VERSION}-linux-${PROTOC_HOSTTYPE}.zip && \
-	ln -s /opt/protoc/bin/protoc /usr/local/bin && \
-	rm -f protoc-${PROTOC_VERSION}-linux-${PROTOC_HOSTTYPE}.zip
+# Removed protobuf
 
 # Install Zephyr SDK
 RUN mkdir -p /opt/toolchains && \
 	cd /opt/toolchains && \
-	wget ${WGET_ARGS} https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-${HOSTTYPE}.tar.xz && \
-	tar xf zephyr-sdk-${ZSDK_VERSION}_linux-${HOSTTYPE}.tar.xz && \
-	zephyr-sdk-${ZSDK_VERSION}/setup.sh -t all -h -c && \
-	rm zephyr-sdk-${ZSDK_VERSION}_linux-${HOSTTYPE}.tar.xz
+  echo https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-${HOSTTYPE}_minimal.tar.xz && \
+	wget ${WGET_ARGS} https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-${HOSTTYPE}_minimal.tar.xz && \
+	tar xf zephyr-sdk-${ZSDK_VERSION}_linux-${HOSTTYPE}_minimal.tar.xz && \
+  cat zephyr-sdk-${ZSDK_VERSION}/setup.sh && \
+	zephyr-sdk-${ZSDK_VERSION}/setup.sh -t arm-zephyr-eabi -c && \
+	rm zephyr-sdk-${ZSDK_VERSION}_linux-${HOSTTYPE}_minimal.tar.xz
 
-# Install FVP
-#
-# Ecosystem FVP License permits redistribution (refer to the relevant license available in the container).
-RUN if [ "${HOSTTYPE}" = "x86_64" ]; then \
-	mkdir -p /opt/fvps && \
-	cd /opt/fvps && \
-	wget ${WGET_ARGS} -O- https://developer.arm.com/-/media/Files/downloads/ecosystem-models/FVP_Base_RevC-2xAEMvA_${FVP_BASE_REVC_VERSION}_Linux64.tgz | tar xz && \
-	wget ${WGET_ARGS} -O- https://developer.arm.com/-/media/Files/downloads/ecosystem-models/FVP_Base_AEMv8R_${FVP_BASE_AEMV8R_VERSION}_Linux64.tgz | tar xz && \
-	wget ${WGET_ARGS} -O- https://developer.arm.com/-/media/Arm%20Developer%20Community/Downloads/OSS/FVP/Corstone-300/FVP_Corstone_SSE-300_${FVP_CORSTONE300_VERSION}_Linux64.tgz | tar xz && \
-	wget ${WGET_ARGS} -O- https://developer.arm.com/-/media/Arm%20Developer%20Community/Downloads/OSS/FVP/Corstone-310/FVP_Corstone_SSE-310_${FVP_CORSTONE310_VERSION}_Linux64.tgz | tar xz && \
-	./FVP_Corstone_SSE-300.sh --no-interactive --i-agree-to-the-contained-eula && \
-	./FVP_Corstone_SSE-310.sh --no-interactive --i-agree-to-the-contained-eula && \
-	ln -s /opt/fvps/Base_RevC_AEMvA_pkg/models/Linux64_GCC-9.3/FVP_Base_RevC-2xAEMvA /usr/local/bin && \
-	ln -s /opt/fvps/AEMv8R_base_pkg/models/Linux64_GCC-9.3/FVP_BaseR_AEMv8R /usr/local/bin && \
-	ln -s /usr/local/FVP_Corstone_SSE-300/models/Linux64_GCC-9.3/FVP_Corstone_SSE-300_Ethos-U55 /usr/local/bin && \
-	ln -s /usr/local/FVP_Corstone_SSE-300/models/Linux64_GCC-9.3/FVP_Corstone_SSE-300_Ethos-U65 /usr/local/bin && \
-	ln -s /usr/local/FVP_Corstone_SSE-310/models/Linux64_GCC-9.3/FVP_Corstone_SSE-310 /usr/local/bin && \
-	ln -s /usr/local/FVP_Corstone_SSE-310/models/Linux64_GCC-9.3/FVP_Corstone_SSE-310_Ethos-U65 /usr/local/bin && \
-	rm FVP_Corstone_SSE-300.sh FVP_Corstone_SSE-310.sh \
-	; fi
+# removed FVP (virtual arm platforms)
 
 # Clean up stale packages
 RUN apt-get clean -y && \
