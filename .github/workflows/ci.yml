@@ -15,6 +15,12 @@ env:
   CI_IMAGE_NAME: ci
   DEVELOPER_IMAGE_NAME: zephyr-build
 
+permissions:
+  checks: write
+  contents: write
+  pull-requests: read
+  id-token: write
+
 jobs:
   build:
     name: Build (${{ matrix.variant.platform }})
