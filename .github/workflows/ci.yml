@@ -74,8 +74,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         push: false
-        ssh: |
-          default=${{ env.SSH_AUTH_SOCK }}
         build-args: |
           GOOGLE_CREDS=${{ steps.credentials_file_name.outputs.credentials_file_name }}
         tags: |
@@ -89,8 +87,6 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         push: true
-        ssh: |
-          default=${{ env.SSH_AUTH_SOCK }}
         build-args: |
           BASE_IMAGE=europe-west2-docker.pkg.dev/playerdata-infrastructure-prod/docker-images/zephyr/ci-base:${{ steps.extract_tag.outputs.tag }}
         tags: |
