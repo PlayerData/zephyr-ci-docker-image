@@ -71,11 +71,10 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: {context}/Dockerfile.base
 #        cache-from: type=gha
 #        cache-to: type=gha,mode=max
         push: false
-        build-args: |
-          GOOGLE_CREDS=${{ steps.credentials_file_name.outputs.credentials_file_name }}
         tags: |
           europe-west2-docker.pkg.dev/playerdata-infrastructure-prod/docker-images/zephyr/ci-base:${{ steps.extract_tag.outputs.tag }}
 
@@ -84,6 +83,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: {context}/Dockerfile.ci
 #        cache-from: type=gha
 #        cache-to: type=gha,mode=max
         push: true
