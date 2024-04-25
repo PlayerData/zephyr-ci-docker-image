@@ -71,7 +71,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: {context}/Dockerfile.base
+        file: Dockerfile.base
 #        cache-from: type=gha
 #        cache-to: type=gha,mode=max
         push: false
@@ -83,7 +83,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: {context}/Dockerfile.ci
+        file: Dockerfile.ci
 #        cache-from: type=gha
 #        cache-to: type=gha,mode=max
         push: true
